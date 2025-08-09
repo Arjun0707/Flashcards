@@ -5,40 +5,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>English Phrase Flashcards</title>
   <style>
-    :root { --bg:#0f172a; --card:#111827; --muted:#94a3b8; --text:#e5e7eb; --accent:#38bdf8; --accent-2:#a78bfa; --ok:#34d399; --warn:#f59e0b; --bad:#f87171; --radius:18px; --shadow:0 10px 30px rgba(0,0,0,.35); }
-    *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,#1f2937 0%,var(--bg) 55%);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial,'Noto Sans','Apple Color Emoji','Segoe UI Emoji';display:grid;place-items:start center;padding:18px;gap:18px}
-    .app{width:min(900px,100%)} header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    h1{font-size:22px;margin:0;letter-spacing:.3px}
-    .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-    .tab-btn{border:1px solid #334155;color:var(--text);background:#0b1220;padding:10px 14px;border-radius:999px;cursor:pointer}
-    .tab-btn[aria-selected="true"]{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b1220;font-weight:700}
-    .card{background:linear-gradient(180deg,#0b1220,var(--card));border:1px solid #1f2937;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-top:14px}
-    .row{display:grid;gap:10px} @media(min-width:640px){.row-2{grid-template-columns:1fr 1fr}}
-    label{font-size:13px;color:var(--muted)}
-    input[type="text"],textarea,select{width:100%;background:#0b1220;border:1px solid #263042;color:var(--text);border-radius:12px;padding:12px 14px;outline:none}
-    textarea{min-height:96px;resize:vertical}
-    .segmented{display:inline-grid;grid-auto-flow:column;gap:6px;background:#0b1220;padding:6px;border-radius:999px;border:1px solid #263042}
-    .segmented input{display:none}
-    .segmented label{margin:0;padding:8px 12px;border-radius:999px;cursor:pointer;border:1px solid transparent;color:var(--muted)}
-    .segmented input:checked+label{background:#111827;border-color:#263042;color:var(--text)}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;padding:12px 16px;border-radius:12px;border:1px solid #263042;background:#0b1220;color:var(--text)}
-    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b1220;border:none;font-weight:700}
-    .btn.ghost{background:transparent}
-    .flashcard{border-radius:var(--radius);border:1px dashed #334155;padding:28px;text-align:center;font-size:clamp(18px,4vw,28px);background:repeating-linear-gradient(45deg,rgba(56,189,248,.05),rgba(56,189,248,.05) 12px,rgba(167,139,250,.04) 12px,rgba(167,139,250,.04) 24px);min-height:140px;display:grid;place-items:center}
-    .controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
-    .controls .btn{min-width:150px}
-    .btn.bad{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.5)}
-    .btn.warn{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.5)}
-    .btn.ok{background:rgba(52,211,153,.15);border-color:rgba(52,211,153,.5)}
-    .meta{display:flex;gap:12px;color:var(--muted);font-size:12px;justify-content:space-between}
-    .pill{border:1px solid #334155;color:var(--muted);padding:4px 8px;border-radius:999px}
-    .list table{width:100%;border-collapse:collapse}
-    .list th,.list td{padding:8px 6px;border-bottom:1px solid #1f2937;font-size:14px}
-    .list th{text-align:left;color:var(--muted);font-weight:600}
-    .empty{color:var(--muted);text-align:center;padding:14px}
-    .footer{color:var(--muted);text-align:center;font-size:12px;margin:8px 0 20px}
-    .test-badge{position:fixed;right:10px;bottom:10px;background:#0b1220;border:1px solid #334155;padding:8px 10px;border-radius:10px;font-size:12px;color:var(--muted)}
+    :root {
+      --bg: #f6f5f3;
+      --surface: #ffffff;
+      --ink: #0a0a0a;
+      --muted: #444;
+      --border: #d9d9d7;
+      --radius: 16px;
+      --shadow: 0 8px 24px rgba(0,0,0,.06);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 17px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+      display: grid;
+      place-items: start center;
+      padding: 16px;
+      gap: 16px;
+    }
+    .app { width: min(820px, 100%); }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    h1 { font-size: clamp(20px, 4vw, 24px); margin: 0; letter-spacing: .2px; }
+
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+    .tab-btn { border: 1px solid var(--ink); background: transparent; color: var(--ink); padding: 12px 14px; border-radius: 999px; cursor: pointer; font-weight: 600; min-height: 44px; }
+    .tab-btn[aria-selected="true"] { background: var(--ink); color: var(--surface); }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-top: 10px; }
+    .row { display: grid; gap: 12px; }
+    @media (min-width: 640px) { .row-2 { grid-template-columns: 1fr 1fr; } }
+
+    label { font-size: 13px; color: var(--muted); }
+    input[type="text"], textarea, select { width: 100%; background: var(--surface); border: 1px solid var(--ink); color: var(--ink); border-radius: 12px; padding: 12px 14px; outline: none; min-height: 44px; }
+    textarea { min-height: 110px; resize: vertical; }
+
+    .segmented { display: inline-grid; grid-auto-flow: column; gap: 6px; background: var(--surface); padding: 6px; border-radius: 999px; border: 1px solid var(--ink); }
+    .segmented input { display: none; }
+    .segmented label { margin: 0; padding: 8px 12px; border-radius: 999px; cursor: pointer; border: 1px solid transparent; color: var(--ink); }
+    .segmented input:checked + label { background: var(--ink); color: var(--surface); }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 12px 16px; border-radius: 999px; border: 1px solid var(--ink); background: var(--surface); color: var(--ink); font-weight: 600; min-height: 44px; }
+    .btn.primary { background: var(--ink); color: var(--surface); }
+    .btn.ghost { background: transparent; }
+    .flashcard { border: 2px solid var(--ink); border-radius: 0; padding: clamp(20px, 5vw, 28px); text-align: center; font-size: clamp(18px, 5vw, 28px); background: var(--surface); min-height: 150px; display: grid; place-items: center; }
+
+
+    .controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+
+    #next { grid-column: 1 / -1; justify-self: stretch; width: 100%; }
+
+    .btn.bad { background: #000; color: #fff; }
+    .btn.warn { background: #333; color: #fff; }
+    .btn.ok { background: #666; color: #fff; }
+
+    .meta { display:flex; gap:12px; color: var(--muted); font-size: 12px; justify-content: space-between; }
+    .pill { border:1px solid var(--ink); color: var(--ink); padding:4px 8px; border-radius:999px; background: var(--surface); }
+
+    .list table { width: 100%; border-collapse: collapse; }
+    .list th, .list td { padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 15px; color: var(--ink); }
+    .list th { text-align: left; color: var(--muted); font-weight: 600; }
+    .empty { color: var(--muted); text-align: center; padding: 16px; }
+
+    .footer { color: var(--muted); text-align:center; font-size:12px; margin: 8px 0 20px; }
+    .test-badge { position: fixed; right: 10px; bottom: 10px; background: var(--surface); border:1px solid var(--ink); padding:8px 10px; border-radius:10px; font-size:12px; color:var(--ink); box-shadow: var(--shadow); }
+
+    @media (max-width: 520px) {
+      header { flex-direction: column; align-items: stretch; }
+      .tabs { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -73,11 +110,11 @@
         </div>
         <div class="row row-2">
           <div>
-            <label for="hint">(Optional) Hint / Meaning</label>
+            <label for="hint">Hint / Meaning</label>
             <input id="hint" type="text" placeholder="Short meaning or note" />
           </div>
           <div>
-            <label for="tags">(Optional) Tags</label>
+            <label for="tags">Tags</label>
             <input id="tags" type="text" placeholder="comma,separated,tags" />
           </div>
         </div>
@@ -350,6 +387,16 @@
     function ok(name, cond){ results.push({name, pass: !!cond}); console.assert(cond, name); }
     function eq(name, a, b){ const pass = JSON.stringify(a)===JSON.stringify(b); results.push({name, pass}); if(!pass){ console.error(name, a, b); } }
     ok('Export button exists', !!$('#exportBtn'));
+      (function(){
+        const fc = document.querySelector('.flashcard');
+        if (fc) {
+          const cs = getComputedStyle(fc);
+          ok('Flashcard border visible', cs.borderStyle === 'solid' && parseFloat(cs.borderTopWidth) >= 2);
+          ok('Flashcard corners sharp', parseFloat(cs.borderTopLeftRadius) === 0);
+        } else {
+          ok('Flashcard element is present', false);
+        }
+      })();
     try {
       const blob = makeExportBlob();
       ok('Export blob is a Blob', blob instanceof Blob);
