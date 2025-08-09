@@ -52,12 +52,14 @@
     .btn.ghost { background: transparent; }
     .flashcard { border: 2px solid var(--ink); border-radius: 0; padding: clamp(20px, 5vw, 28px); text-align: center; font-size: clamp(18px, 5vw, 28px); background: var(--surface); min-height: 150px; display: grid; place-items: center; }
 
+
     .controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+
     #next { grid-column: 1 / -1; justify-self: stretch; width: 100%; }
 
     #rate-nf { border: 1px solid #f4cccc; background: #f4cccc; color: var(--ink); border-radius: 0; }
-    #rate-f  { border: 1px solid #fff2cc; background: #fff2cc; color: var(--ink); border-radius: 0; }
-    #rate-s  { border: 1px solid #d9ead3; background: #d9ead3; color: var(--ink); border-radius: 0; }
+    #rate-f { border: 1px solid #fff2cc; background: #fff2cc; color: var(--ink); border-radius: 0; }
+    #rate-s { border: 1px solid #d9ead3; background: #d9ead3; color: var(--ink); border-radius: 0; }
 
     .meta { display:flex; gap:12px; color: var(--muted); font-size: 12px; justify-content: space-between; }
     .pill { border:1px solid var(--ink); color: var(--ink); padding:4px 8px; border-radius:999px; background: var(--surface); }
@@ -209,7 +211,6 @@
   let idx = -1;
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-  function stableId(kind, text){ return 'k:' + (kind||'word') + '|' + String(text||'').trim().toLowerCase(); }
 
   const panels = { add: $('#panel-add'), revise: $('#panel-revise'), list: $('#panel-list') };
   const tabs = { add: $('#tab-add'), revise: $('#tab-revise'), list: $('#tab-list') };
@@ -241,7 +242,7 @@
     const text = (isWord ? word.value.trim() : sentence.value.trim());
     if(!text) { alert('Please enter a ' + (isWord ? 'word' : 'sentence/phrase')); return; }
     const c = ({
-      id: stableId(isWord ? 'word' : 'sentence', text),
+      id: crypto.randomUUID(),
       kind: isWord ? 'word' : 'sentence',
       text,
       hint: hint.value.trim() || undefined,
@@ -250,7 +251,7 @@
       seen: 0,
       rating: 0
     });
-    cards = mergeById(cards, [c]); save();
+    cards.push(c); save();
     word.value = ''; sentence.value = ''; hint.value = ''; tags.value = '';
     alert('Added ✓');
   });
@@ -334,7 +335,7 @@
           <td>${escapeHtml(c.text)}</td>
           <td>${escapeHtml(c.hint||'—')}</td>
           <td>${(c.tags||[]).join(', ')||'—'}</td>
-          <td class="rating-cell"><span class="rate-dot" data-rating="${c.rating||0}" title="${['Not Familiar','Familiar','Satisfied'][c.rating]||'Not Familiar'}"></span></td>
+          <td><span class=\"rate-dot\" data-rating=\"${c.rating||0}\" title=\"${['Not Familiar','Familiar','Satisfied'][c.rating]||'Not Familiar'}\"></span></td>
           <td>
             <button type="button" class="btn" data-edit="${c.id}">Edit</button>
             <button type="button" class="btn" data-del="${c.id}">Delete</button>
@@ -392,7 +393,7 @@
         if(!Array.isArray(arr)) throw new Error('Invalid file');
         const now = Date.now();
         const cleaned = arr.map(x=>({
-          id: x.id || stableId(x.kind==='sentence' ? 'sentence' : 'word', x.text),
+          id: x.id || crypto.randomUUID(),
           kind: x.kind==='sentence' ? 'sentence' : 'word',
           text: String(x.text||'').trim(),
           hint: x.hint ? String(x.hint) : undefined,
@@ -410,188 +411,79 @@
   });
   $('#wipeBtn').addEventListener('click', ()=>{ if(!confirm('This will delete ALL cards. Continue?')) return; cards = []; save(); renderList(); rebuildQueue(); showNext(true); });
 
-  async function syncFromRepo(notify=false){
-    try{
-      const urls = ['./phrases.json','./sentences.json'];
-      const arrays = [];
-      for(const u of urls){
-        const res = await fetch(u, {cache:'no-store'});
-        if(!res.ok) throw new Error(u + ' ' + res.status);
-        const data = await res.json();
-        if(Array.isArray(data)) arrays.push(...data);
-      }
-      if(!arrays.length){ if(notify) alert('No data in JSON files'); return; }
-      const now = Date.now();
-      const cleaned = arrays.map(x=>({
-        id: x.id || stableId(x.kind==='sentence' ? 'sentence' : 'word', x.text),
-        kind: x.kind==='sentence' ? 'sentence' : 'word',
-        text: String(x.text||'').trim(),
-        hint: x.hint ? String(x.hint) : undefined,
-        tags: Array.isArray(x.tags)? x.tags.map(String) : undefined,
-        created: Number(x.created)||now,
-        seen: Number(x.seen)||0,
-        rating: (x.rating===1?1:(x.rating===2?2:0))
-      })).filter(x=>x.text);
-      cards = mergeById(cards, cleaned); save();
-      renderList(); rebuildQueue(); showNext(true);
-      if(notify) alert('Synced ' + cleaned.length + ' items from repo');
-    }catch(e){ if(notify) alert('Sync failed: '+ (e && e.message ? e.message : e)); }
-  }
-  (function(){ const b = document.querySelector('#syncBtn'); if(b) b.addEventListener('click', ()=> syncFromRepo(true)); })();
-
   function load(){ try { return JSON.parse(localStorage.getItem(LS_KEY)||'[]') || []; } catch { return []; } }
   function save(){ localStorage.setItem(LS_KEY, JSON.stringify(cards)); }
   function mergeById(orig, incoming){ const map = new Map(orig.map(o=>[o.id,o])); for(const c of incoming){ map.set(c.id, c); } return Array.from(map.values()); }
   function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j]]; } }
-  function escapeHtml(s){ return s.replace(/[&<>"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",""":"&quot;"}[m])); }
+  function escapeHtml(s){ return s.replace(/[&<>\"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
 
-  // Auto-sync on load
+  $('#testBtn').addEventListener('click', runTests);
+  const testBadge = $('#testBadge');
+  function runTests(){
+    const results = [];
+    function ok(name, cond){ results.push({name, pass: !!cond}); console.assert(cond, name); }
+    function eq(name, a, b){ const pass = JSON.stringify(a)===JSON.stringify(b); results.push({name, pass}); if(!pass){ console.error(name, a, b); } }
+    ok('Export button exists', !!$('#exportBtn'));
+      (function(){
+        const fc = document.querySelector('.flashcard');
+        if (fc) {
+          const cs = getComputedStyle(fc);
+          ok('Flashcard border visible', cs.borderStyle === 'solid' && parseFloat(cs.borderTopWidth) >= 2);
+          ok('Flashcard corners sharp', parseFloat(cs.borderTopLeftRadius) === 0);
+        } else {
+          ok('Flashcard element is present', false);
+        }
+      })();
+    try {
+      const blob = makeExportBlob();
+      ok('Export blob is a Blob', blob instanceof Blob);
+      ok('Export blob type', blob.type === 'application/json');
+      const fr = new FileReader();
+      fr.onload = ()=>{
+        try {
+          const parsed = JSON.parse(String(fr.result));
+          ok('Export parses to array', Array.isArray(parsed));
+          const before = cards.length;
+          const now = Date.now();
+          const dupe = parsed.map(x=>({ ...x, created: now }));
+          const merged = (function merge(orig, incoming){ const map=new Map(orig.map(o=>[o.id,o])); for(const c of incoming){ map.set(c.id,c); } return Array.from(map.values()); })(cards, dupe);
+          ok('Round-trip merge keeps size', merged.length === before);
+          const temp1 = { id: 'TEST_EDIT_1', kind:'word', text:'old text', created: now, seen:0, rating:0 };
+          cards.push(temp1); save(); renderList();
+          const editBtn = document.querySelector('#list [data-edit="TEST_EDIT_1"]');
+          const realPrompt = window.prompt; window.prompt = ()=> 'new text';
+          if(editBtn){ editBtn.click(); }
+          window.prompt = realPrompt;
+          const edited = cards.find(c=>c.id==='TEST_EDIT_1');
+          ok('Edit changed text', edited && edited.text==='new text');
+          const temp2 = { id: 'TEST_DEL_1', kind:'word', text:'to delete', created: now, seen:0, rating:0 };
+          cards.push(temp2); save(); renderList();
+          const delBtn = document.querySelector('#list [data-del="TEST_DEL_1"]');
+          const realConfirm = window.confirm; window.confirm = ()=> true;
+          if(delBtn){ delBtn.click(); }
+          window.confirm = realConfirm;
+          ok('Delete removed card', !cards.find(c=>c.id==='TEST_DEL_1'));
+          const tDot = { id:'TEST_DOT', kind:'word', text:'dot sample', created: now+1, seen:0, rating:2 };
+          cards.push(tDot); save(); renderList();
+          const dotOK = document.querySelector('#list .rate-dot[data-rating="2"]');
+          ok('Rating dot renders and centers', !!dotOK && dotOK.closest('td').classList.contains('rating-cell'));
+          finish();
+        } catch(e){ ok('Export JSON parseable', false); finish(); }
+      };
+      fr.readAsText(blob);
+    } catch(e){ ok('makeExportBlob did not throw', false); finish(); }
+    function finish(){
+      const pass = results.filter(r=>r.pass).length;
+      const total = results.length;
+      testBadge.style.display = 'block';
+      testBadge.textContent = `Tests: ${pass}/${total} passed`;
+      setTimeout(()=>{ testBadge.style.display='none'; }, 5000);
+      console.table(results);
+    }
+  }
+
   rebuildQueue();
-  syncFromRepo(false);
 })();
 </script>
-
-<script>
-/**
- * Auto-refetch seeds on every load and merge into localStorage.
- * Works even if the app was opened before; safe to run multiple times.
- * Requires phrases.json and sentences.json to be hosted alongside index.html.
- */
-(function autoRefetchSeeds() {
-  const STORAGE_KEY = "english_flashcards_v1";
-
-  // Helper: safe toast (falls back to console if your app has no toast UI)
-  function notify(msg) {
-    try {
-      // If your app already has a toast function, use it:
-      if (window.showToast) return window.showToast(msg);
-    } catch (_) {}
-    console.log("[flashcards]", msg);
-  }
-
-  // Helper: make a stable ID (same rule your app uses)
-  function makeId(kind, text) {
-    return (kind + "::" + String(text || "").trim().toLowerCase())
-      .replace(/\s+/g, " ");
-  }
-
-  // Helper: normalize a raw seed item into a card shape your app understands
-  function normalizeSeed(raw) {
-    if (!raw) return null;
-    const kind = (raw.kind || (raw.type || "word")).toLowerCase(); // tolerate "type"
-    const text = String(raw.text ?? raw.word ?? "").trim();
-    if (!text) return null;
-    const hint = raw.hint ? String(raw.hint) : undefined;
-    const tags = Array.isArray(raw.tags) ? raw.tags : (raw.tags ? [String(raw.tags)] : []);
-    const id = raw.id ? String(raw.id) : makeId(kind, text);
-    return {
-      id,
-      kind,           // "word" | "sentence"
-      text,
-      hint,
-      tags,
-      created: raw.created || Date.now(),
-      seen: raw.seen ?? 0,
-      rating: Number.isFinite(raw.rating) ? raw.rating : 0 // 0 not familiar, 1 familiar, 2 satisfied
-    };
-  }
-
-  function readDeck() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function writeDeck(cards) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
-  }
-
-  // Merge by id: prefer existing card’s progress (rating/seen), but update text/hint/tags/kind
-  function mergeDeck(existing, incoming) {
-    const byId = new Map(existing.map(c => [c.id, {...c}]));
-
-    // Also index by canonical id (in case old cards used a different id rule)
-    function canonicalId(c) { return (c.kind + "::" + String(c.text||"").trim().toLowerCase()).replace(/\s+/g, " "); }
-    const alias = new Map()
-    existing.forEach(c => alias.set(canonicalId(c), c.id))
-
-    for (const card of incoming) {
-      const canon = canonicalId(card);
-      const existingId = byId.has(card.id) ? card.id : alias.get(canon);
-      const cur = existingId ? byId.get(existingId) : undefined;
-
-      if (!cur) {
-        byId.set(card.id, card);
-      } else {
-        byId.set(existingId, {
-          ...card,
-          // keep user progress
-          rating: Number.isFinite(cur.rating) ? cur.rating : card.rating ?? 0,
-          seen: Number.isFinite(cur.seen) ? cur.seen : card.seen ?? 0,
-          created: cur.created || card.created || Date.now(),
-          id: existingId, // preserve existing id so references remain stable
-        });
-      }
-    }
-    return Array.from(byId.values());
-  }
-
-  async function fetchJson(path) {
-    try {
-      const res = await fetch(path, { cache: "no-store" });
-      if (!res.ok) throw new Error(res.status + " " + res.statusText);
-      const json = await res.json();
-      if (!Array.isArray(json)) return [];
-      return json;
-    } catch (e) {
-      console.warn(`[flashcards] Could not fetch ${path}:`, e.message || e);
-      return [];
-    }
-  }
-
-  async function run() {
-    // Always try both files; missing ones just return []
-    const [phrases, sentences] = await Promise.all([
-      fetchJson("./phrases.json"),
-      fetchJson("./sentences.json"),
-    ]);
-
-    const seeds = []
-      .concat(phrases, sentences)
-      .map(normalizeSeed)
-      .filter(Boolean);
-
-    if (!seeds.length) {
-      notify("No seed updates found (could not load phrases/sentences).");
-      // Still try to render UI if app exposes hooks
-      if (typeof window.rebuildStudyQueue === "function") window.rebuildStudyQueue();
-      if (typeof window.renderAllCards === "function") window.renderAllCards();
-      return;
-    }
-
-    const before = readDeck();
-    const merged = mergeDeck(before, seeds);
-    writeDeck(merged);
-
-    const added = merged.length - before.length;
-    notify(added > 0 ? `Synced ${added} new card(s) from JSON.` : "Seeds synced (no new cards).");
-
-    // If your app provides UI hooks, refresh them
-    if (typeof window.rebuildStudyQueue === "function") window.rebuildStudyQueue();
-    if (typeof window.renderAllCards === "function") window.renderAllCards();
-  }
-
-  // Kick off after DOM is ready so UI can refresh
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", run, { once: true });
-  } else {
-    run();
-  }
-})();
-</script>
-
 </body>
 </html>
