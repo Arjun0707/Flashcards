@@ -450,5 +450,148 @@
   syncFromRepo(false);
 })();
 </script>
+
+<script>
+/**
+ * Auto-refetch seeds on every load and merge into localStorage.
+ * Works even if the app was opened before; safe to run multiple times.
+ * Requires phrases.json and sentences.json to be hosted alongside index.html.
+ */
+(function autoRefetchSeeds() {
+  const STORAGE_KEY = "english_flashcards_v1";
+
+  // Helper: safe toast (falls back to console if your app has no toast UI)
+  function notify(msg) {
+    try {
+      // If your app already has a toast function, use it:
+      if (window.showToast) return window.showToast(msg);
+    } catch (_) {}
+    console.log("[flashcards]", msg);
+  }
+
+  // Helper: make a stable ID (same rule your app uses)
+  function makeId(kind, text) {
+    return (kind + "::" + String(text || "").trim().toLowerCase())
+      .replace(/\s+/g, " ");
+  }
+
+  // Helper: normalize a raw seed item into a card shape your app understands
+  function normalizeSeed(raw) {
+    if (!raw) return null;
+    const kind = (raw.kind || (raw.type || "word")).toLowerCase(); // tolerate "type"
+    const text = String(raw.text ?? raw.word ?? "").trim();
+    if (!text) return null;
+    const hint = raw.hint ? String(raw.hint) : undefined;
+    const tags = Array.isArray(raw.tags) ? raw.tags : (raw.tags ? [String(raw.tags)] : []);
+    const id = raw.id ? String(raw.id) : makeId(kind, text);
+    return {
+      id,
+      kind,           // "word" | "sentence"
+      text,
+      hint,
+      tags,
+      created: raw.created || Date.now(),
+      seen: raw.seen ?? 0,
+      rating: Number.isFinite(raw.rating) ? raw.rating : 0 // 0 not familiar, 1 familiar, 2 satisfied
+    };
+  }
+
+  function readDeck() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeDeck(cards) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+  }
+
+  // Merge by id: prefer existing card’s progress (rating/seen), but update text/hint/tags/kind
+  function mergeDeck(existing, incoming) {
+    const byId = new Map(existing.map(c => [c.id, {...c}]));
+
+    // Also index by canonical id (in case old cards used a different id rule)
+    function canonicalId(c) { return (c.kind + "::" + String(c.text||"").trim().toLowerCase()).replace(/\s+/g, " "); }
+    const alias = new Map()
+    existing.forEach(c => alias.set(canonicalId(c), c.id))
+
+    for (const card of incoming) {
+      const canon = canonicalId(card);
+      const existingId = byId.has(card.id) ? card.id : alias.get(canon);
+      const cur = existingId ? byId.get(existingId) : undefined;
+
+      if (!cur) {
+        byId.set(card.id, card);
+      } else {
+        byId.set(existingId, {
+          ...card,
+          // keep user progress
+          rating: Number.isFinite(cur.rating) ? cur.rating : card.rating ?? 0,
+          seen: Number.isFinite(cur.seen) ? cur.seen : card.seen ?? 0,
+          created: cur.created || card.created || Date.now(),
+          id: existingId, // preserve existing id so references remain stable
+        });
+      }
+    }
+    return Array.from(byId.values());
+  }
+
+  async function fetchJson(path) {
+    try {
+      const res = await fetch(path, { cache: "no-store" });
+      if (!res.ok) throw new Error(res.status + " " + res.statusText);
+      const json = await res.json();
+      if (!Array.isArray(json)) return [];
+      return json;
+    } catch (e) {
+      console.warn(`[flashcards] Could not fetch ${path}:`, e.message || e);
+      return [];
+    }
+  }
+
+  async function run() {
+    // Always try both files; missing ones just return []
+    const [phrases, sentences] = await Promise.all([
+      fetchJson("./phrases.json"),
+      fetchJson("./sentences.json"),
+    ]);
+
+    const seeds = []
+      .concat(phrases, sentences)
+      .map(normalizeSeed)
+      .filter(Boolean);
+
+    if (!seeds.length) {
+      notify("No seed updates found (could not load phrases/sentences).");
+      // Still try to render UI if app exposes hooks
+      if (typeof window.rebuildStudyQueue === "function") window.rebuildStudyQueue();
+      if (typeof window.renderAllCards === "function") window.renderAllCards();
+      return;
+    }
+
+    const before = readDeck();
+    const merged = mergeDeck(before, seeds);
+    writeDeck(merged);
+
+    const added = merged.length - before.length;
+    notify(added > 0 ? `Synced ${added} new card(s) from JSON.` : "Seeds synced (no new cards).");
+
+    // If your app provides UI hooks, refresh them
+    if (typeof window.rebuildStudyQueue === "function") window.rebuildStudyQueue();
+    if (typeof window.renderAllCards === "function") window.renderAllCards();
+  }
+
+  // Kick off after DOM is ready so UI can refresh
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run, { once: true });
+  } else {
+    run();
+  }
+})();
+</script>
+
 </body>
 </html>
