@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>English Phrase Flashcards</title>
+  <title>English Phrase Flashcards — Autosave</title>
   <style>
     :root { --bg:#f6f5f3; --surface:#fff; --ink:#0a0a0a; --muted:#444; --border:#d9d9d7; --radius:16px; --shadow:0 8px 24px rgba(0,0,0,.06); }
     * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -156,33 +156,17 @@
       </div>
     </section>
 
-    <div class="footer">Single-file app. No tags or hints. Use <b>Export HTML</b> to save progress. ✨</div>
+    <div class="footer">Autosaves to this browser via localStorage. Use <b>Export HTML</b> to make a portable copy.</div>
   </div>
 
   <div id="testBadge" class="test-badge" style="display:none;"></div>
 
-  <!-- Embedded initial data (edit these items or keep empty []) -->
-  <script id="cardData" type="application/json">[
-    {
-      "id": "EX1",
-      "kind": "word",
-      "text": "serendipity",
-      "rating": 0,
-      "created": 1691500000000,
-      "seen": 0
-    },
-    {
-      "id": "EX2",
-      "kind": "sentence",
-      "text": "It was pure serendipity that we met.",
-      "rating": 0,
-      "created": 1691500100000,
-      "seen": 0
-    }
-  ]</script>
+  <script id="cardData" type="application/json">[]</script>
 
 <script>
 (function(){
+  const LS_KEY = 'english_flashcards_autosave';
+
   // ===== State =====
   let cards = load();
   let queue = [];
@@ -339,9 +323,19 @@
   });
   document.getElementById('wipeBtn').addEventListener('click', ()=>{ if(!confirm('This will delete ALL cards. Continue?')) return; cards = []; save(); renderList(); rebuildQueue(); showNext(true); });
 
-  // ===== Persistence in single-file mode =====
-  function load(){ try{ const el = document.getElementById('cardData'); if(!el) return []; const txt = el.textContent || '[]'; const arr = JSON.parse(txt); return Array.isArray(arr) ? arr : []; }catch{ return []; } }
-  function save(){ updateEmbeddedJSON(); }
+  // ===== Persistence =====
+  function load(){
+    try{
+      const lsRaw = localStorage.getItem(LS_KEY);
+      if(lsRaw){ const arr = JSON.parse(lsRaw); if(Array.isArray(arr)) return arr; }
+    }catch{}
+    try{
+      const el = document.getElementById('cardData'); if(!el) return [];
+      const txt = el.textContent || '[]'; const arr = JSON.parse(txt);
+      return Array.isArray(arr) ? arr : [];
+    }catch{ return []; }
+  }
+  function save(){ updateEmbeddedJSON(); try{ localStorage.setItem(LS_KEY, JSON.stringify(cards)); }catch{} }
   function updateEmbeddedJSON(){ const el = document.getElementById('cardData'); if(el){ el.textContent = JSON.stringify(cards, null, 2); } }
 
   // ===== Utils =====
