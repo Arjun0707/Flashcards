@@ -57,9 +57,9 @@
 
     #next { grid-column: 1 / -1; justify-self: stretch; width: 100%; }
 
-    .btn.bad { background: #000; color: #fff; }
-    .btn.warn { background: #333; color: #fff; }
-    .btn.ok { background: #666; color: #fff; }
+    #rate-nf { border: 2px solid #f4cccc; background: #e9e9e9; color: var(--ink); }
+    #rate-f { border: 2px solid #fff2cc; background: #e9e9e9; color: var(--ink); }
+    #rate-s { border: 2px solid #d9ead3; background: #e9e9e9; color: var(--ink); }
 
     .meta { display:flex; gap:12px; color: var(--muted); font-size: 12px; justify-content: space-between; }
     .pill { border:1px solid var(--ink); color: var(--ink); padding:4px 8px; border-radius:999px; background: var(--surface); }
@@ -68,13 +68,18 @@
     .list th, .list td { padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 15px; color: var(--ink); }
     .list th { text-align: left; color: var(--muted); font-weight: 600; }
     .empty { color: var(--muted); text-align: center; padding: 16px; }
+    .rating-cell { text-align: center; }
+    .rate-dot { display:inline-block; width:12px; height:12px; border-radius:50%; }
+    .rate-dot[data-rating="0"] { background:#e06666; }
+    .rate-dot[data-rating="1"] { background:#f1c232; }
+    .rate-dot[data-rating="2"] { background:#93c47d; }
 
     .footer { color: var(--muted); text-align:center; font-size:12px; margin: 8px 0 20px; }
     .test-badge { position: fixed; right: 10px; bottom: 10px; background: var(--surface); border:1px solid var(--ink); padding:8px 10px; border-radius:10px; font-size:12px; color:var(--ink); box-shadow: var(--shadow); }
 
     @media (max-width: 520px) {
       header { flex-direction: column; align-items: stretch; }
-      .tabs { grid-template-columns: 1fr; }
+      .tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
   </style>
 </head>
@@ -164,6 +169,25 @@
     </section>
 
     <section class="card" id="panel-list" role="tabpanel" aria-labelledby="tab-list" hidden>
+      <div class="row row-2" style="margin-bottom:8px;align-items:end;">
+        <div>
+          <label for="listType">Type</label>
+          <select id="listType">
+            <option value="all">All</option>
+            <option value="word">Words</option>
+            <option value="sentence">Sentences</option>
+          </select>
+        </div>
+        <div>
+          <label for="listRating">Rating</label>
+          <select id="listRating">
+            <option value="all">All</option>
+            <option value="nf">Not Familiar</option>
+            <option value="f">Familiar</option>
+            <option value="s">Satisfied</option>
+          </select>
+        </div>
+      </div>
       <div class="list" id="list"></div>
       <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
         <button class="btn" id="exportBtn">Export JSON</button>
@@ -295,14 +319,23 @@
   function renderList(){
     const root = $('#list');
     if(!cards.length){ root.innerHTML = `<div class="empty">No cards yet</div>`; return; }
-    const rows = cards.slice().sort((a,b)=> a.created - b.created).map(c=>`
+    const tSel = document.getElementById('listType');
+    const rSel = document.getElementById('listRating');
+    const t = tSel ? tSel.value : 'all';
+    const r = rSel ? rSel.value : 'all';
+    let set = cards.slice();
+    if(t==='word') set = set.filter(c=>c.kind==='word');
+    if(t==='sentence') set = set.filter(c=>c.kind==='sentence');
+    if(r==='nf') set = set.filter(c=>c.rating===0);
+    if(r==='f') set = set.filter(c=>c.rating===1);
+    if(r==='s') set = set.filter(c=>c.rating===2);
+    const rows = set.slice().sort((a,b)=> a.created - b.created).map(c=>`
         <tr>
           <td>${c.kind==='word' ? 'Word' : 'Sentence'}</td>
           <td>${escapeHtml(c.text)}</td>
           <td>${escapeHtml(c.hint||'—')}</td>
           <td>${(c.tags||[]).join(', ')||'—'}</td>
-          <td>${['Not Familiar','Familiar','Satisfied'][c.rating]||'Not Familiar'}</td>
-          <td>${new Date(c.created).toLocaleDateString()}</td>
+          <td><span class=\"rate-dot\" data-rating=\"${c.rating||0}\" title=\"${['Not Familiar','Familiar','Satisfied'][c.rating]||'Not Familiar'}\"></span></td>
           <td>
             <button type="button" class="btn" data-edit="${c.id}">Edit</button>
             <button type="button" class="btn" data-del="${c.id}">Delete</button>
@@ -312,7 +345,7 @@
     root.innerHTML = `
       <table>
         <thead>
-          <tr><th>Type</th><th>Text</th><th>Hint</th><th>Tags</th><th>Rating</th><th>Added</th><th></th></tr>
+          <tr><th>Type</th><th>Text</th><th>Hint</th><th>Tags</th><th>Rating</th><th></th></tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>`;
@@ -324,6 +357,10 @@
       btn.addEventListener('click', (e)=>{ e.preventDefault(); const id = btn.getAttribute('data-del'); if(id) delCard(id); });
     });
   }
+  const listType = document.getElementById('listType');
+  const listRating = document.getElementById('listRating');
+  if(listType) listType.addEventListener('change', ()=> renderList());
+  if(listRating) listRating.addEventListener('change', ()=> renderList());
 
   function editCard(id){
     const c = cards.find(x=>x.id===id); if(!c) return;
@@ -426,6 +463,10 @@
           if(delBtn){ delBtn.click(); }
           window.confirm = realConfirm;
           ok('Delete removed card', !cards.find(c=>c.id==='TEST_DEL_1'));
+          const tDot = { id:'TEST_DOT', kind:'word', text:'dot sample', created: now+1, seen:0, rating:2 };
+          cards.push(tDot); save(); renderList();
+          const dotOK = document.querySelector('#list .rate-dot[data-rating="2"]');
+          ok('Rating dot renders and centers', !!dotOK && dotOK.closest('td').classList.contains('rating-cell'));
           finish();
         } catch(e){ ok('Export JSON parseable', false); finish(); }
       };
