@@ -337,7 +337,40 @@
     progress.textContent = `${idx+1} / ${queue.length}`;
   }
 
-  function rate(val){ if(!queue.length) return; const c = queue[idx]; c.rating = val; c.seen = (c.seen||0) + 1; save(); const boost = (val===0? 2 : val===1? 1 : 0); for(let i=0;i<boost;i++){ queue.splice(Math.min(queue.length, idx+3+i), 0, c); } showNext(); }
+  function rate(val){
+    if(!queue.length) return;
+    const c = queue[idx];
+
+    // Check if the card is rated 'Not Familiar' twice in a row
+    if (val === 0) {
+      if (!c.sessionNfCount) {
+        c.sessionNfCount = 1;
+        // Re-insert the card into the queue after 7 cards
+        const cardToReinsert = queue.splice(idx, 1)[0];
+        let newIndex = idx + 7;
+        newIndex = Math.min(newIndex, queue.length);
+        queue.splice(newIndex, 0, cardToReinsert);
+        idx--; // Adjust index to stay on the correct next card
+      } else if (c.sessionNfCount === 1) {
+        // Remove the card from the queue entirely
+        queue.splice(idx, 1);
+        idx--; // Adjust index
+      }
+    } else {
+      // For other ratings, reset the sessionNfCount
+      c.sessionNfCount = 0;
+    }
+
+    // Update the main card data and save to localStorage
+    const mainCard = cards.find(card => card.id === c.id);
+    if(mainCard) {
+      mainCard.rating = val;
+      mainCard.seen = (mainCard.seen || 0) + 1;
+      save();
+    }
+
+    showNext();
+  }
   function score(c){ const rWeight = (2 - c.rating) * 3; const seenWeight = Math.max(0, 5 - (c.seen||0)); const recencyWeight = (Date.now() - c.created) / (1000*60*60*24); return rWeight + seenWeight + Math.min(5, recencyWeight/3); }
 
   // ===== List =====
