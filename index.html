@@ -23,20 +23,36 @@
     label{ font-size:13px; color:var(--muted); }
     input[type="text"], textarea, select{ width:100%; background:var(--surface); border:1px solid var(--ink); color:var(--ink); border-radius:12px; padding:12px 14px; outline:none; min-height:44px; }
     textarea{ min-height:110px; resize:vertical; }
+    /* New styling for the select element to make it appear thicker as requested */
+    select {
+      padding: 14px 18px; /* Increased padding */
+      border-radius: 999px; /* Rounded corners for a pill shape */
+      border: 1px solid var(--ink);
+    }
 
     .segmented{ display:inline-grid; grid-auto-flow:column; gap:6px; background:var(--surface); padding:6px; border-radius:999px; border:1px solid var(--ink); }
     .segmented input{ display:none; }
     .segmented label{ margin:0; padding:8px 12px; border-radius:999px; cursor:pointer; border:1px solid transparent; color:var(--ink); }
     .segmented input:checked + label{ background:var(--ink); color:var(--surface); }
 
-    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; padding:12px 16px; border-radius:999px; border:1px solid var(--ink); background:var(--surface); color:var(--ink); font-weight:600; min-height:44px; }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; padding:12px 16px; border-radius:999px; border:1px solid var(--ink); background:var(--surface); color:var(--ink); font-weight:600; min-height:44px; transition: transform 0.1s ease-out; }
     .btn.primary{ background:var(--ink); color:var(--surface); }
     .btn.ghost{ background:transparent; }
 
-    .flashcard{ border:2px solid var(--ink); border-radius:0; padding:clamp(20px,5vw,28px); text-align:center; font-size:clamp(18px,5vw,28px); background:var(--surface); min-height:150px; display:grid; place-items:center; }
+    .flashcard{ border:2px solid var(--ink); border-radius:var(--radius); padding:clamp(20px,5vw,28px); text-align:center; font-size:clamp(18px,5vw,28px); background:var(--surface); min-height:150px; display:grid; place-items:center; }
     /* Card change animation */
     @keyframes flashcardSwap { from { opacity:0; transform: translateY(6px) scale(.98); } to { opacity:1; transform:none; } }
     .flashcard-change { animation: flashcardSwap .25s ease; }
+
+    /* New animation for the 'Next' button and other rating buttons */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .btn-pulse {
+      animation: pulse 0.3s ease-out;
+    }
 
     .controls{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:12px; }
     #next{ grid-column:1 / -1; justify-self:stretch; width:100%; }
@@ -254,10 +270,36 @@
   const filterInfo= $('#filterInfo');
   filterSel.addEventListener('change', ()=> { rebuildQueue(); showNext(true); });
   orderSel.addEventListener('change', ()=> { rebuildQueue(); showNext(true); });
-  $('#rate-nf').addEventListener('click', ()=> rate(0));
-  $('#rate-f').addEventListener('click',  ()=> rate(1));
-  $('#rate-s').addEventListener('click',  ()=> rate(2));
-  $('#next').addEventListener('click',    ()=> showNext());
+
+  const nextBtn = $('#next');
+  const rateNfBtn = $('#rate-nf');
+  const rateFBtn = $('#rate-f');
+  const rateSBtn = $('#rate-s');
+
+  function addPulseAnimation(button) {
+    button.classList.add('btn-pulse');
+    setTimeout(() => {
+      button.classList.remove('btn-pulse');
+    }, 300);
+  }
+
+  rateNfBtn.addEventListener('click', () => {
+    addPulseAnimation(rateNfBtn);
+    rate(0);
+  });
+  rateFBtn.addEventListener('click', () => {
+    addPulseAnimation(rateFBtn);
+    rate(1);
+  });
+  rateSBtn.addEventListener('click', () => {
+    addPulseAnimation(rateSBtn);
+    rate(2);
+  });
+  nextBtn.addEventListener('click', () => {
+    addPulseAnimation(nextBtn);
+    showNext();
+  });
+
 
   function rebuildQueue(){
     const f = filterSel.value;
@@ -388,7 +430,7 @@
   // ===== Tests (light) =====
   document.getElementById('testBtn').addEventListener('click', runTests);
   const testBadge = document.getElementById('testBadge');
-  function runTests(){ const results=[]; const ok=(n,c)=>{results.push({name:n,pass:!!c}); console.assert(c,n);}; ok('Export button exists', !!document.getElementById('exportBtn')); const fc=document.querySelector('.flashcard'); if(fc){ const cs=getComputedStyle(fc); ok('Flashcard border visible', cs.borderStyle==='solid' && parseFloat(cs.borderTopWidth)>=2); ok('Flashcard corners sharp', parseFloat(cs.borderTopLeftRadius)===0);} else { ok('Flashcard element is present', false);} const pass=results.filter(r=>r.pass).length; const total=results.length; testBadge.style.display='block'; testBadge.textContent=`Tests: ${pass}/${total} passed`; setTimeout(()=>{ testBadge.style.display='none'; },5000); console.table(results);} 
+  function runTests(){ const results=[]; const ok=(n,c)=>{results.push({name:n,pass:!!c}); console.assert(c,n);}; ok('Export button exists', !!document.getElementById('exportBtn')); const fc=document.querySelector('.flashcard'); if(fc){ const cs=getComputedStyle(fc); ok('Flashcard border visible', cs.borderStyle==='solid' && parseFloat(cs.borderTopWidth)>=2); ok('Flashcard corners sharp', parseFloat(cs.borderTopLeftRadius)===0);} else { ok('Flashcard element is present', false);} const pass=results.filter(r=>r.pass).length; const total=results.length; testBadge.style.display='block'; testBadge.textContent=`Tests: ${pass}/${total} passed`; setTimeout(()=>{ testBadge.style.display='none'; },5000); console.table(results);}
 
   // Init
   switchTab('add');
