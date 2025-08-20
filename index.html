@@ -39,7 +39,7 @@
     .btn.primary{ background:var(--ink); color:var(--surface); }
     .btn.ghost{ background:transparent; }
 
-    .flashcard{ border:2px solid var(--ink); border-radius:var(--radius); padding:clamp(20px,5vw,28px); text-align:center; font-size:clamp(18px,5vw,28px); background:var(--surface); min-height:150px; display:grid; place-items:center; }
+    .flashcard{ border:2px solid var(--ink); border-radius:var(--radius); padding:clamp(20px,5vw,28px); text-align:center; font-size:clamp(18px,5vw,28px); background:var(--surface); min-height:150px; display:grid; place-items:center; position: relative; }
     /* Card change animation */
     @keyframes flashcardSwap { from { opacity:0; transform: translateY(6px) scale(.98); } to { opacity:1; transform:none; } }
     .flashcard-change { animation: flashcardSwap .25s ease; }
@@ -89,6 +89,89 @@
     #globalToolbar .btn{ border-radius:0; }
 
     @media (max-width:520px){ header{ flex-direction:column; align-items:stretch; } .tabs{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+    /* Style to hide text for audio mode */
+    .flashcard.hide-text {
+        color: transparent;
+    }
+
+    /* NEW: Audio indicator styling */
+    .flashcard .audio-indicator {
+      position: absolute;
+      bottom: 10px;
+      right: 15px;
+      font-size: 24px;
+      color: var(--ink);
+    }
+    .flashcard.hide-text .audio-indicator {
+      color: var(--ink);
+    }
+
+    /* New styles for audio controls and switch */
+    .audio-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    /* The switch - the box around the slider */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px; /* Smaller width */
+      height: 24px; /* Smaller height */
+    }
+    
+    /* Hide default HTML checkbox */
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    /* The slider */
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--border);
+      -webkit-transition: .4s;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px; /* Smaller slider handle */
+      width: 18px; /* Smaller slider handle */
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    /* Change slider color to black when checked */
+    input:checked + .slider {
+      background-color: #000;
+    }
+    
+    input:focus + .slider {
+      box-shadow: 0 0 1px #000;
+    }
+    
+    input:checked + .slider:before {
+      -webkit-transform: translateX(16px);
+      -ms-transform: translateX(16px);
+      transform: translateX(16px);
+    }
   </style>
 </head>
 <body>
@@ -152,18 +235,40 @@
             <label for="order">Order</label>
             <select id="order">
               <option value="mix">Smart mix</option>
+              <!-- Default order changed to Random -->
+              <option value="rand" selected>Random</option>
               <option value="new">New first</option>
               <option value="old">Oldest first</option>
-              <option value="rand">Random</option>
             </select>
           </div>
         </div>
-        <div class="flashcard" id="flashcard">No cards yet. Add some!</div>
+        <div class="flashcard" id="flashcard">
+          No cards yet. Add some!
+          <!-- Audio indicator element -->
+          <div id="audioIndicator" class="audio-indicator" style="display:none;">-</div>
+        </div>
         <div class="controls">
           <button class="btn bad" id="rate-nf">Not Familiar</button>
           <button class="btn warn" id="rate-f">Familiar</button>
           <button class="btn ok" id="rate-s">Satisfied</button>
           <button class="btn" id="next">Next ▶</button>
+        </div>
+        <!-- Updated audio controls container -->
+        <div class="audio-controls">
+          <!-- Sound label -->
+          <span style="font-size: 13px; color: var(--muted);">Sound</span>
+          <!-- Audio toggle switch -->
+          <label class="switch">
+            <input type="checkbox" id="audioToggle">
+            <span class="slider"></span>
+          </label>
+          <!-- Speech rate control dropdown -->
+          <select id="speechRate" style="padding: 6px 10px; font-size: 13px; width: 100px;">
+            <option value="0.7">Slow</option>
+            <option value="0.9" selected>Normal</option>
+            <option value="1.1">Fast</option>
+            <option value="1.3">Very Fast</option>
+          </select>
         </div>
       </div>
     </section>
@@ -268,6 +373,8 @@
   const flashcard = $('#flashcard');
   const progress  = $('#progress');
   const filterInfo= $('#filterInfo');
+  const audioIndicator = $('#audioIndicator');
+
   filterSel.addEventListener('change', ()=> { rebuildQueue(); showNext(true); });
   orderSel.addEventListener('change', ()=> { rebuildQueue(); showNext(true); });
 
@@ -275,6 +382,8 @@
   const rateNfBtn = $('#rate-nf');
   const rateFBtn = $('#rate-f');
   const rateSBtn = $('#rate-s');
+  const audioToggleBtn = $('#audioToggle');
+  const speechRateSelect = $('#speechRate');
 
   function addPulseAnimation(button) {
     button.classList.add('btn-pulse');
@@ -300,6 +409,27 @@
     showNext();
   });
 
+  // Toggle audio mode using the checkbox state
+  audioToggleBtn.addEventListener('change', () => {
+    if (!audioToggleBtn.checked) {
+        window.speechSynthesis.cancel();
+        flashcard.classList.remove('hide-text');
+        audioIndicator.style.display = 'none';
+    } else {
+        audioIndicator.style.display = 'block';
+    }
+    showNext();
+  });
+
+  function speakText(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = parseFloat(speechRateSelect.value) || 0.9;
+      // Removed onend listener to keep text hidden
+      window.speechSynthesis.speak(utterance);
+    }
+  }
 
   function rebuildQueue(){
     const f = filterSel.value;
@@ -324,11 +454,21 @@
   function labelForOrder(o){ return { mix:'Smart mix', new:'New first', old:'Oldest first', rand:'Random' }[o] || 'Smart mix'; }
 
   function showNext(reset=false){
-    if(!queue.length){ flashcard.textContent = 'No cards for this filter.'; progress.textContent = `0 / 0`; return; }
+    if(!queue.length){ flashcard.innerHTML = 'No cards for this filter.'; progress.textContent = `0 / 0`; return; }
     if(reset) idx = -1;
     idx = (idx + 1) % queue.length;
     const c = queue[idx];
-    flashcard.innerHTML = `<div style="max-width: 32ch;">${escapeHtml(c.text)}</div>`;
+    
+    // NEW: Conditional rendering based on audio mode
+    if (audioToggleBtn.checked) {
+        flashcard.innerHTML = '<div style="max-width: 32ch;">-</div>';
+        speakText(c.text);
+    } else {
+        flashcard.innerHTML = `<div style="max-width: 32ch;">${escapeHtml(c.text)}</div>`;
+    }
+
+    audioIndicator.style.display = audioToggleBtn.checked ? 'block' : 'none';
+    
     // retrigger a subtle transition to show change
     flashcard.classList.remove('flashcard-change');
     // force reflow
@@ -422,7 +562,7 @@
     const r = prompt('Rating: 0=Not Familiar, 1=Familiar, 2=Satisfied', String(c.rating)); if(r==null) return; c.rating = Math.max(0, Math.min(2, Number(r)||0));
     save(); renderList();
   }
-  function delCard(id){ if(!confirm('Delete this card?')) return; cards = cards.filter(c=>c.id!==id); save(); renderList(); }
+  function delCard(id){ if(!confirm('This will delete the card. Are you sure?')) return; cards = cards.filter(c=>c.id!==id); save(); renderList(); }
 
   // ===== Import / Export =====
   function makeExportBlob(){ return new Blob([JSON.stringify(cards, null, 2)], { type:'application/json' }); }
