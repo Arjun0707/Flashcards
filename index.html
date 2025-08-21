@@ -60,6 +60,11 @@
     #rate-nf{ border:1px solid #f4cccc; background:#f4cccc; color:var(--ink); border-radius:0; }
     #rate-f{ border:1px solid #fff2cc; background:#fff2cc; color:var(--ink); border-radius:0; }
     #rate-s{ border:1px solid #d9ead3; background:#d9ead3; color:var(--ink); border-radius:0; }
+    
+    /* NEW: Class for the pressed button outline */
+    .btn.pressed {
+        box-shadow: 0 0 0 2px var(--ink);
+    }
 
     .meta{ display:flex; gap:12px; color:var(--muted); font-size:12px; justify-content:space-between; align-items:center; }
     .pill{ border:1px solid var(--ink); color:var(--ink); padding:4px 8px; border-radius:999px; background:var(--surface); }
@@ -388,16 +393,27 @@
     }, 300);
   }
 
+  // NEW: Function to add a visual feedback for the rating buttons
+  function addRatingButtonFeedback(button) {
+      button.classList.add('pressed');
+      setTimeout(() => {
+          button.classList.remove('pressed');
+      }, 500); // The outline will stay for 0.5 seconds
+  }
+
   rateNfBtn.addEventListener('click', () => {
     addPulseAnimation(rateNfBtn);
+    addRatingButtonFeedback(rateNfBtn);
     rate(0);
   });
   rateFBtn.addEventListener('click', () => {
     addPulseAnimation(rateFBtn);
+    addRatingButtonFeedback(rateFBtn);
     rate(1);
   });
   rateSBtn.addEventListener('click', () => {
     addPulseAnimation(rateSBtn);
+    addRatingButtonFeedback(rateSBtn);
     rate(2);
   });
   nextBtn.addEventListener('click', () => {
@@ -405,14 +421,12 @@
     showNext();
   });
 
-  // NEW: Repeat button listener
   repeatBtn.addEventListener('click', () => {
     if (!queue.length || !audioToggleBtn.checked) return;
     const c = queue[idx];
     speakText(c.text);
   });
 
-  // Toggle audio mode using the checkbox state
   audioToggleBtn.addEventListener('change', () => {
     if (!audioToggleBtn.checked) {
         window.speechSynthesis.cancel();
@@ -524,8 +538,11 @@
       mainCard.seen = (mainCard.seen || 0) + 1;
       save();
     }
-
-    showNext();
+    
+    // NEW: Don't show the next card if audio mode is on
+    if (!audioToggleBtn.checked) {
+        showNext();
+    }
   }
   function score(c){ const rWeight = (2 - c.rating) * 3; const seenWeight = Math.max(0, 5 - (c.seen||0)); const recencyWeight = (Date.now() - c.created) / (1000*60*60*24); return rWeight + seenWeight + Math.min(5, recencyWeight/3); }
 
