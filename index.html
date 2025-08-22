@@ -348,7 +348,16 @@
     panels[name].hidden = false;
     Object.values(tabs).forEach(b => b.setAttribute('aria-selected','false'));
     tabs[name].setAttribute('aria-selected','true');
-    if(name==='revise'){ rebuildQueue(); showNext(); }
+    if(name==='revise'){
+      // Only rebuild the queue if it's empty. This happens on initial load or after a "Wipe All"
+      if(queue.length === 0) {
+          rebuildQueue();
+          showNext();
+      } else {
+          // Otherwise, just show the current card without moving the index.
+          showCard(queue[idx]);
+      }
+    }
     if(name==='list'){ renderList(); }
   }
 
@@ -474,7 +483,7 @@
         window.speechSynthesis.cancel();
         if (queue.length) {
             const c = queue[idx];
-            flashcard.innerHTML = `<div style="max-width: 32ch;">${escapeHtml(c.text)}</div>`;
+            showCard(c); // Use the new function
         }
         audioIndicator.style.display = 'none';
     } else {
@@ -496,6 +505,25 @@
     }
   }
 
+  // NEW: Centralized function to show a card
+  function showCard(c) {
+    // Conditional rendering based on audio mode
+    if (audioToggleBtn.checked) {
+        flashcard.innerHTML = '<div style="max-width: 32ch;">-</div>';
+        speakText(c.text);
+    } else {
+        flashcard.innerHTML = `<div style="max-width: 32ch;">${escapeHtml(c.text)}</div>`;
+    }
+    audioIndicator.style.display = audioToggleBtn.checked ? 'block' : 'none';
+    
+    // retrigger a subtle transition to show change
+    flashcard.classList.remove('flashcard-change');
+    // force reflow
+    void flashcard.offsetWidth;
+    flashcard.classList.add('flashcard-change');
+    progress.textContent = `${idx + 1} / ${queue.length}`;
+  }
+
   function rebuildQueue(){
     const f = filterSel.value;
     let set = cards.slice();
@@ -513,70 +541,31 @@
 
     queue = set; idx = -1;
     filterInfo.textContent = labelForFilter(f) + ' • ' + labelForOrder(o);
-    progress.textContent = `0 / ${queue.length}`;
+    
+    if (queue.length === 0) {
+      flashcard.innerHTML = 'No cards yet. Add some!';
+      progress.textContent = `0 / 0`;
+    }
   }
   function labelForFilter(f){ return { all:'All cards', word:'Words', sentence:'Sentences', nf:'Not Familiar', f:'Familiar', s:'Satisfied' }[f] || 'All cards'; }
   function labelForOrder(o){ return { mix:'Smart mix', new:'New first', old:'Oldest first', rand:'Random' }[o] || 'Smart mix'; }
 
   // NEW: Function to show the previous card
   function showPrev() {
-    if (!queue.length) {
-      flashcard.innerHTML = 'No cards yet. Add some!';
-      progress.textContent = `0 / 0`; 
-      audioIndicator.style.display = 'none';
-      return; 
-    }
+    if (!queue.length) return;
     // Calculate the new index, wrapping from 0 back to the end of the queue
     idx = (idx - 1 + queue.length) % queue.length;
-    
     const c = queue[idx];
-    
-    // Conditional rendering based on audio mode
-    if (audioToggleBtn.checked) {
-        flashcard.innerHTML = '<div style="max-width: 32ch;">-</div>';
-        speakText(c.text);
-    } else {
-        flashcard.innerHTML = `<div style="max-width: 32ch;">${escapeHtml(c.text)}</div>`;
-    }
-
-    audioIndicator.style.display = audioToggleBtn.checked ? 'block' : 'none';
-    
-    // retrigger a subtle transition to show change
-    flashcard.classList.remove('flashcard-change');
-    // force reflow
-    void flashcard.offsetWidth;
-    flashcard.classList.add('flashcard-change');
-    progress.textContent = `${idx + 1} / ${queue.length}`;
+    showCard(c); // Use the new function to display the card
   }
 
   function showNext(reset=false){
-    if(!queue.length){ 
-      flashcard.innerHTML = 'No cards yet. Add some!';
-      progress.textContent = `0 / 0`; 
-      audioIndicator.style.display = 'none';
-      return; 
-    }
+    if(!queue.length) return;
     if(reset) idx = -1;
     // Calculate the new index, wrapping from the end back to the beginning
     idx = (idx + 1) % queue.length;
     const c = queue[idx];
-    
-    // Conditional rendering based on audio mode
-    if (audioToggleBtn.checked) {
-        flashcard.innerHTML = '<div style="max-width: 32ch;">-</div>';
-        speakText(c.text);
-    } else {
-        flashcard.innerHTML = `<div style="max-width: 32ch;">${escapeHtml(c.text)}</div>`;
-    }
-
-    audioIndicator.style.display = audioToggleBtn.checked ? 'block' : 'none';
-    
-    // retrigger a subtle transition to show change
-    flashcard.classList.remove('flashcard-change');
-    // force reflow
-    void flashcard.offsetWidth;
-    flashcard.classList.add('flashcard-change');
-    progress.textContent = `${idx+1} / ${queue.length}`;
+    showCard(c); // Use the new function to display the card
   }
 
   function rate(val){
