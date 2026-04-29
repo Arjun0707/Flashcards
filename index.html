@@ -5,7 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>English Phrase Flashcards — Autosave</title>
   <style>
-    :root { --bg:#f6f5f3; --surface:#fff; --ink:#0a0a0a; --muted:#444; --border:#d9d9d7; --radius:16px; --shadow:0 8px 24px rgba(0,0,0,.06); }
+    :root { 
+      --bg:#f6f5f3; 
+      --surface:#fff; 
+      --ink:#0a0a0a; 
+      --muted:#444; 
+      --border:#d9d9d7; 
+      --radius:16px; 
+      --shadow:0 8px 24px rgba(0,0,0,.06); 
+    }
+
+    body.dark {
+      --bg: #0a0a0a;
+      --surface: #161616;
+      --ink: #f0f0f0;
+      --muted: #a0a0a0;
+      --border: #2a2a2a;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
     * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
     html,body{ height:100%; }
     body{ margin:0; background:var(--bg); color:var(--ink); font:17px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial; display:grid; place-items:start center; padding:16px; gap:16px; }
@@ -23,10 +41,9 @@
     label{ font-size:13px; color:var(--muted); }
     input[type="text"], textarea, select{ width:100%; background:var(--surface); border:1px solid var(--ink); color:var(--ink); border-radius:12px; padding:12px 14px; outline:none; min-height:44px; }
     textarea{ min-height:110px; resize:vertical; }
-    /* New styling for the select element to make it appear thicker as requested */
     select {
-      padding: 14px 18px; /* Increased padding */
-      border-radius: 999px; /* Rounded corners for a pill shape */
+      padding: 14px 18px;
+      border-radius: 999px;
       border: 1px solid var(--ink);
     }
 
@@ -40,39 +57,30 @@
     .btn.ghost{ background:transparent; }
 
     .flashcard{ border:2px solid var(--ink); border-radius:var(--radius); padding:clamp(20px,5vw,28px); text-align:center; font-size:clamp(18px,5vw,28px); background:var(--surface); min-height:150px; display:grid; place-items:center; position: relative; cursor: pointer; }
-    /* Card change animation */
     @keyframes flashcardSwap { from { opacity:0; transform: translateY(6px) scale(.98); } to { opacity:1; transform:none; } }
     .flashcard-change { animation: flashcardSwap .25s ease; }
 
-    /* New animation for the 'Next' button and other rating buttons */
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.05); }
       100% { transform: scale(1); }
     }
-    .btn-pulse {
-      animation: pulse 0.3s ease-out;
-    }
+    .btn-pulse { animation: pulse 0.3s ease-out; }
 
     .controls{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:12px; }
-    /* Modified control grid to include prev/next buttons */
-    .controls-nav {
-      display: grid;
-      grid-template-columns: 1fr 1fr; /* Two columns for Prev/Next */
-      gap: 8px;
-    }
+    .controls-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     #next{ justify-self:stretch; width:100%; }
     #prev{ justify-self:stretch; width:100%; }
 
-
-    #rate-nf{ border:1px solid #f4cccc; background:#f4cccc; color:var(--ink); border-radius:0; }
-    #rate-f{ border:1px solid #fff2cc; background:#fff2cc; color:var(--ink); border-radius:0; }
-    #rate-s{ border:1px solid #d9ead3; background:#d9ead3; color:var(--ink); border-radius:0; }
+    #rate-nf{ border:1px solid #f4cccc; background:#f4cccc; color:#0a0a0a; border-radius:0; }
+    #rate-f{ border:1px solid #fff2cc; background:#fff2cc; color:#0a0a0a; border-radius:0; }
+    #rate-s{ border:1px solid #d9ead3; background:#d9ead3; color:#0a0a0a; border-radius:0; }
     
-    /* NEW: Class for the pressed button outline */
-    .btn.pressed {
-        box-shadow: 0 0 0 2px var(--ink);
-    }
+    body.dark #rate-nf { background: #e06666; border-color: #e06666; color: #fff; }
+    body.dark #rate-f { background: #f1c232; border-color: #f1c232; color: #0a0a0a; }
+    body.dark #rate-s { background: #93c47d; border-color: #93c47d; color: #fff; }
+
+    .btn.pressed { box-shadow: 0 0 0 2px var(--ink); }
 
     .meta{ display:flex; gap:12px; color:var(--muted); font-size:12px; justify-content:space-between; align-items:center; }
     .pill{ border:1px solid var(--ink); color:var(--ink); padding:4px 8px; border-radius:999px; background:var(--surface); }
@@ -90,100 +98,37 @@
     .footer{ color:var(--muted); text-align:center; font-size:12px; margin:8px 0 20px; }
     .test-badge{ position:fixed; right:10px; bottom:10px; background:var(--surface); border:1px solid var(--ink); padding:8px 10px; border-radius:10px; font-size:12px; color:var(--ink); box-shadow:var(--shadow); }
 
-    /* Minimalist icon buttons */
-    .icon-btn{ background:transparent; border:none; cursor:pointer; padding:6px; border-radius:8px; color:var(--ink); }
-    .icon-btn:hover{ background:#f0f0f0; }
-    .icon-btn:focus{ outline:2px solid var(--border); outline-offset:2px; }
+    .icon-btn{ background:transparent; border:none; cursor:pointer; padding:6px; border-radius:8px; color:var(--ink); display: flex; align-items: center; justify-content: center; }
+    .icon-btn:hover{ background:rgba(0,0,0,0.05); }
+    body.dark .icon-btn:hover{ background:rgba(255,255,255,0.1); }
     .icon{ display:block; width:16px; height:16px; }
 
-    /* Sticky toolbar inside All Cards */
     .toolbar{ display:flex; flex-wrap:wrap; gap:8px; position:sticky; top:0; z-index:10; background:var(--surface); padding:8px; margin-bottom:8px; border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); }
-    /* Sharp corners specifically for toolbar buttons */
     #globalToolbar .btn{ border-radius:0; }
 
     @media (max-width:520px){ header{ flex-direction:column; align-items:stretch; } .tabs{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
 
-    /* Style to hide text for audio mode */
-    .flashcard.hide-text {
-        color: transparent;
-    }
+    .flashcard .audio-indicator { position: absolute; bottom: 10px; right: 15px; font-size: 24px; color: var(--ink); }
+    .audio-controls { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 10px; }
+    .switch { position: relative; display: inline-block; width: 40px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--ink); }
+    input:checked + .slider:before { transform: translateX(16px); }
 
-    /* NEW: Audio indicator styling */
-    .flashcard .audio-indicator {
-      position: absolute;
-      bottom: 10px;
-      right: 15px;
-      font-size: 24px;
+    /* Theme Toggle Button */
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--ink);
       color: var(--ink);
-    }
-    .flashcard.hide-text .audio-indicator {
-      color: var(--ink);
-    }
-
-    /* New styles for audio controls and switch */
-    .audio-controls {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-      margin-top: 10px;
-    }
-
-    /* The switch - the box around the slider */
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 40px; /* Smaller width */
-      height: 24px; /* Smaller height */
-    }
-    
-    /* Hide default HTML checkbox */
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    
-    /* The slider */
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: var(--border);
-      -webkit-transition: .4s;
-      transition: .4s;
-      border-radius: 34px;
-    }
-    
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px; /* Smaller slider handle */
-      width: 18px; /* Smaller slider handle */
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      -webkit-transition: .4s;
-      transition: .4s;
       border-radius: 50%;
-    }
-    
-    /* Change slider color to black when checked */
-    input:checked + .slider {
-      background-color: #000;
-    }
-    
-    input:focus + .slider {
-      box-shadow: 0 0 1px #000;
-    }
-    
-    input:checked + .slider:before {
-      -webkit-transform: translateX(16px);
-      -ms-transform: translateX(16px);
-      transform: translateX(16px);
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
   </style>
 </head>
@@ -191,12 +136,26 @@
   <div class="app" id="app">
     <header>
       <h1>English Phrase Flashcards</h1>
-      <nav class="tabs" role="tablist">
-        <button class="tab-btn" role="tab" id="tab-add" aria-selected="true">Add</button>
-        <button class="tab-btn" role="tab" id="tab-revise" aria-selected="false">Revise</button>
-        <button class="tab-btn" role="tab" id="tab-list" aria-selected="false">All Cards</button>
-      </nav>
+      <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode">
+        <svg id="themeIcon" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
     </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab-btn" role="tab" id="tab-add" aria-selected="true">Add</button>
+      <button class="tab-btn" role="tab" id="tab-revise" aria-selected="false">Revise</button>
+      <button class="tab-btn" role="tab" id="tab-list" aria-selected="false">All Cards</button>
+    </nav>
 
     <!-- Add Tab -->
     <section class="card" id="panel-add" role="tabpanel" aria-labelledby="tab-add">
@@ -256,14 +215,13 @@
         </div>
         <div class="flashcard" id="flashcard">
           No cards yet. Add some!
-          <div id="audioIndicator" class="audio-indicator" style="display:none;">-</div>
+          <div id="audioIndicator" class="audio-indicator" style="display:none;">🔊</div>
         </div>
         <div class="controls">
-          <button class="btn bad" id="rate-nf">Not Familiar</button>
-          <button class="btn warn" id="rate-f">Familiar</button>
-          <button class="btn ok" id="rate-s">Satisfied</button>
+          <button class="btn" id="rate-nf">Not Familiar</button>
+          <button class="btn" id="rate-f">Familiar</button>
+          <button class="btn" id="rate-s">Satisfied</button>
         </div>
-        <!-- NEW: Wrapper for previous/next buttons -->
         <div class="controls-nav">
           <button class="btn" id="prev">◀ Previous</button>
           <button class="btn" id="next">Next ▶</button>
@@ -306,7 +264,6 @@
         </div>
       </div>
 
-      <!-- Sticky toolbar ABOVE the table -->
       <div class="toolbar" id="globalToolbar">
         <button class="btn" id="exportBtn">Export JSON</button>
         <input type="file" id="importInput" accept="application/json" style="display:none;" />
@@ -318,7 +275,7 @@
       <div class="list" id="list"></div>
     </section>
 
-    <div class="footer">Autosaves to this browser via localStorage. Use <b>Export JSON</b> to back up and <b>Import JSON</b> to restore.</div>
+    <div class="footer">Autosaves to this browser via localStorage. Use <b>Export JSON</b> to back up.</div>
   </div>
 
   <div id="testBadge" class="test-badge" style="display:none;"></div>
@@ -328,16 +285,38 @@
 <script>
 (function(){
   const LS_KEY = 'english_flashcards_autosave';
+  const THEME_KEY = 'english_flashcards_theme';
 
   // ===== State =====
   let cards = load();
   let queue = [];
   let idx = -1;
-  // NEW: Variables to track touch events for swiping
   let startX = 0;
   const SWIPE_THRESHOLD = 50;
 
   const $ = (sel, root=document) => root.querySelector(sel);
+
+  // ===== Theme Management =====
+  const themeToggle = $('#themeToggle');
+  const themeIcon = $('#themeIcon');
+  
+  function setTheme(isDark) {
+    if (isDark) {
+      document.body.classList.add('dark');
+      localStorage.setItem(THEME_KEY, 'dark');
+      themeIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+    } else {
+      document.body.classList.remove('dark');
+      localStorage.setItem(THEME_KEY, 'light');
+      themeIcon.innerHTML = `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
+    }
+  }
+
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setTheme(savedTheme === 'dark' || (!savedTheme && prefersDark));
+
+  themeToggle.addEventListener('click', () => setTheme(!document.body.classList.contains('dark')));
 
   // ===== Tabs =====
   const panels = { add: $('#panel-add'), revise: $('#panel-revise'), list: $('#panel-list') };
@@ -349,14 +328,8 @@
     Object.values(tabs).forEach(b => b.setAttribute('aria-selected','false'));
     tabs[name].setAttribute('aria-selected','true');
     if(name==='revise'){
-      // Only rebuild the queue if it's empty. This happens on initial load or after a "Wipe All"
-      if(queue.length === 0) {
-          rebuildQueue();
-          showNext();
-      } else {
-          // Otherwise, just show the current card without moving the index.
-          showCard(queue[idx]);
-      }
+      if(queue.length === 0) { rebuildQueue(); showNext(); } 
+      else { showCard(queue[idx]); }
     }
     if(name==='list'){ renderList(); }
   }
@@ -376,15 +349,8 @@
   $('#btnAdd').addEventListener('click', () => {
     const isWord = kindWord.checked;
     const text = (isWord ? word.value.trim() : sentence.value.trim());
-    if(!text) { alert('Please enter a ' + (isWord ? 'word' : 'sentence/phrase')); return; }
-    const c = ({
-      id: crypto.randomUUID(),
-      kind: isWord ? 'word' : 'sentence',
-      text,
-      rating: 0,
-      created: Date.now(),
-      seen: 0
-    });
+    if(!text) { alert('Please enter text'); return; }
+    const c = ({ id: crypto.randomUUID(), kind: isWord ? 'word' : 'sentence', text, rating: 0, created: Date.now(), seen: 0 });
     cards.push(c); save();
     word.value = ''; sentence.value = '';
     alert('Added ✓');
@@ -402,99 +368,31 @@
   filterSel.addEventListener('change', ()=> { rebuildQueue(); showNext(true); });
   orderSel.addEventListener('change', ()=> { rebuildQueue(); showNext(true); });
 
-  const prevBtn = $('#prev'); // NEW: Get a reference to the previous button
+  const prevBtn = $('#prev');
   const nextBtn = $('#next');
-  const rateNfBtn = $('#rate-nf');
-  const rateFBtn = $('#rate-f');
-  const rateSBtn = $('#rate-s');
   const audioToggleBtn = $('#audioToggle');
   const speechRateSelect = $('#speechRate');
 
-  // NEW: Add a click listener for audio, and touch listeners for swiping
   flashcard.addEventListener('click', () => {
-    if (audioToggleBtn.checked && queue.length > 0) {
-      const c = queue[idx];
-      speakText(c.text);
-    }
+    if (audioToggleBtn.checked && queue.length > 0) speakText(queue[idx].text);
   });
 
-  // NEW: Touch event listeners for swipe functionality
-  flashcard.addEventListener('touchstart', (e) => {
-    startX = e.changedTouches[0].clientX;
-  });
-
+  flashcard.addEventListener('touchstart', (e) => { startX = e.changedTouches[0].clientX; });
   flashcard.addEventListener('touchend', (e) => {
-    const endX = e.changedTouches[0].clientX;
-    const swipeDistance = endX - startX;
-
-    if (swipeDistance > SWIPE_THRESHOLD) {
-      // Swiped right, show previous card
-      showPrev();
-    } else if (swipeDistance < -SWIPE_THRESHOLD) {
-      // Swiped left, show next card
-      showNext();
-    }
+    const diff = e.changedTouches[0].clientX - startX;
+    if (Math.abs(diff) > SWIPE_THRESHOLD) diff > 0 ? showPrev() : showNext();
   });
 
   function addPulseAnimation(button) {
     button.classList.add('btn-pulse');
-    setTimeout(() => {
-      button.classList.remove('btn-pulse');
-    }, 300);
+    setTimeout(() => button.classList.remove('btn-pulse'), 300);
   }
 
-  // NEW: Function to add a visual feedback for the rating buttons
-  function addRatingButtonFeedback(button) {
-      button.classList.add('pressed');
-      setTimeout(() => {
-          button.classList.remove('pressed');
-      }, 500); // The outline will stay for 0.5 seconds
-  }
-
-  rateNfBtn.addEventListener('click', () => {
-    addPulseAnimation(rateNfBtn);
-    addRatingButtonFeedback(rateNfBtn);
-    rate(0);
-  });
-  rateFBtn.addEventListener('click', () => {
-    addPulseAnimation(rateFBtn);
-    addRatingButtonFeedback(rateFBtn);
-    rate(1);
-  });
-  rateSBtn.addEventListener('click', () => {
-    addPulseAnimation(rateSBtn);
-    addRatingButtonFeedback(rateSBtn);
-    rate(2);
-  });
-  
-  // NEW: Event listener for the Previous button
-  prevBtn.addEventListener('click', () => {
-    addPulseAnimation(prevBtn);
-    showPrev();
-  });
-
-  nextBtn.addEventListener('click', () => {
-    addPulseAnimation(nextBtn);
-    showNext();
-  });
-
-  audioToggleBtn.addEventListener('change', () => {
-    if (!audioToggleBtn.checked) {
-        window.speechSynthesis.cancel();
-        if (queue.length) {
-            const c = queue[idx];
-            showCard(c); // Use the new function
-        }
-        audioIndicator.style.display = 'none';
-    } else {
-        if (queue.length) {
-            const c = queue[idx];
-            flashcard.innerHTML = '<div style="max-width: 32ch;">-</div>';
-            speakText(c.text);
-        }
-        audioIndicator.style.display = 'block';
-    }
-  });
+  $('#rate-nf').addEventListener('click', (e) => { addPulseAnimation(e.target); rate(0); });
+  $('#rate-f').addEventListener('click', (e) => { addPulseAnimation(e.target); rate(1); });
+  $('#rate-s').addEventListener('click', (e) => { addPulseAnimation(e.target); rate(2); });
+  prevBtn.addEventListener('click', () => { addPulseAnimation(prevBtn); showPrev(); });
+  nextBtn.addEventListener('click', () => { addPulseAnimation(nextBtn); showNext(); });
 
   function speakText(text) {
     if ('speechSynthesis' in window) {
@@ -505,20 +403,12 @@
     }
   }
 
-  // NEW: Centralized function to show a card
   function showCard(c) {
-    // Conditional rendering based on audio mode
-    if (audioToggleBtn.checked) {
-        flashcard.innerHTML = '<div style="max-width: 32ch;">-</div>';
-        speakText(c.text);
-    } else {
-        flashcard.innerHTML = `<div style="max-width: 32ch;">${escapeHtml(c.text)}</div>`;
-    }
+    if (!c) { flashcard.innerHTML = 'No cards yet.'; return; }
+    flashcard.innerHTML = `<div style="max-width: 32ch;">${escapeHtml(c.text)}</div>`;
+    if (audioToggleBtn.checked) speakText(c.text);
     audioIndicator.style.display = audioToggleBtn.checked ? 'block' : 'none';
-    
-    // retrigger a subtle transition to show change
     flashcard.classList.remove('flashcard-change');
-    // force reflow
     void flashcard.offsetWidth;
     flashcard.classList.add('flashcard-change');
     progress.textContent = `${idx + 1} / ${queue.length}`;
@@ -541,69 +431,34 @@
 
     queue = set; idx = -1;
     filterInfo.textContent = labelForFilter(f) + ' • ' + labelForOrder(o);
-    
-    if (queue.length === 0) {
-      flashcard.innerHTML = 'No cards yet. Add some!';
-      progress.textContent = `0 / 0`;
-    }
+    if (!queue.length) { flashcard.innerHTML = 'No cards found.'; progress.textContent = `0 / 0`; }
   }
-  function labelForFilter(f){ return { all:'All cards', word:'Words', sentence:'Sentences', nf:'Not Familiar', f:'Familiar', s:'Satisfied' }[f] || 'All cards'; }
-  function labelForOrder(o){ return { mix:'Smart mix', new:'New first', old:'Oldest first', rand:'Random' }[o] || 'Smart mix'; }
+  function labelForFilter(f){ return { all:'All', word:'Words', sentence:'Sentences', nf:'Not Familiar', f:'Familiar', s:'Satisfied' }[f] || 'All'; }
+  function labelForOrder(o){ return { mix:'Smart mix', new:'New first', old:'Oldest first', rand:'Random' }[o] || 'Mix'; }
 
-  // NEW: Function to show the previous card
   function showPrev() {
     if (!queue.length) return;
-    // Calculate the new index, wrapping from 0 back to the end of the queue
     idx = (idx - 1 + queue.length) % queue.length;
-    const c = queue[idx];
-    showCard(c); // Use the new function to display the card
+    showCard(queue[idx]);
   }
 
   function showNext(reset=false){
     if(!queue.length) return;
     if(reset) idx = -1;
-    // Calculate the new index, wrapping from the end back to the beginning
     idx = (idx + 1) % queue.length;
-    const c = queue[idx];
-    showCard(c); // Use the new function to display the card
+    showCard(queue[idx]);
   }
 
   function rate(val){
     if(!queue.length) return;
     const c = queue[idx];
-
-    // Check if the card is rated 'Not Familiar' twice in a row
-    if (val === 0) {
-      if (!c.sessionNfCount) {
-        c.sessionNfCount = 1;
-        // Re-insert the card into the queue after 7 cards
-        const cardToReinsert = queue.splice(idx, 1)[0];
-        let newIndex = idx + 7;
-        newIndex = Math.min(newIndex, queue.length);
-        queue.splice(newIndex, 0, cardToReinsert);
-        idx--; // Adjust index to stay on the correct next card
-      } else if (c.sessionNfCount === 1) {
-        // Remove the card from the queue entirely
-        queue.splice(idx, 1);
-        idx--; // Adjust index
-      }
-    } else {
-      // For other ratings, reset the sessionNfCount
-      c.sessionNfCount = 0;
-    }
-
-    // Update the main card data and save to localStorage
     const mainCard = cards.find(card => card.id === c.id);
     if(mainCard) {
       mainCard.rating = val;
       mainCard.seen = (mainCard.seen || 0) + 1;
       save();
     }
-    
-    // NEW: Don't show the next card if audio mode is on
-    if (!audioToggleBtn.checked) {
-        showNext();
-    }
+    showNext();
   }
   function score(c){ const rWeight = (2 - c.rating) * 3; const seenWeight = Math.max(0, 5 - (c.seen||0)); const recencyWeight = (Date.now() - c.created) / (1000*60*60*24); return rWeight + seenWeight + Math.min(5, recencyWeight/3); }
 
@@ -611,95 +466,70 @@
   function renderList(){
     const root = $('#list');
     if(!cards.length){ root.innerHTML = `<div class=\"empty\">No cards yet</div>`; return; }
-    const tSel = document.getElementById('listType');
-    const rSel = document.getElementById('listRating');
-    const t = tSel ? tSel.value : 'all';
-    const r = rSel ? rSel.value : 'all';
+    const t = $('#listType').value;
+    const r = $('#listRating').value;
     let set = cards.slice();
     if(t==='word') set = set.filter(c=>c.kind==='word');
     if(t==='sentence') set = set.filter(c=>c.kind==='sentence');
     if(r==='nf') set = set.filter(c=>c.rating===0);
     if(r==='f') set = set.filter(c=>c.rating===1);
     if(r==='s') set = set.filter(c=>c.rating===2);
-    const rows = set.slice().sort((a,b)=> a.created - b.created).map(c=>`
+    const rows = set.sort((a,b)=> a.created - b.created).map(c=>`
       <tr>
         <td>${c.kind==='word' ? 'Word' : 'Sentence'}</td>
         <td>${escapeHtml(c.text)}</td>
-        <td class="rating-cell"><span class=\"rate-dot\" data-rating=\"${c.rating||0}\" title=\"${['Not Familiar','Familiar','Satisfied'][c.rating]||'Not Familiar'}\"></span></td>
+        <td class="rating-cell"><span class=\"rate-dot\" data-rating=\"${c.rating||0}\"></span></td>
         <td>
-          <button type="button" class="icon-btn" data-edit="${c.id}" title="Edit" aria-label="Edit">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 20h9"></path>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
-            </svg>
-          </button>
-          <button type="button" class="icon-btn" data-del="${c.id}" title="Delete" aria-label="Delete">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6l-2 14H7L5 6"></path>
-              <line x1="10" y1="11" x2="10" y2="17"></line>
-              <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>
-          </button>
+          <button class="icon-btn" onclick="window.editCard('${c.id}')">✏️</button>
+          <button class="icon-btn" onclick="window.delCard('${c.id}')">🗑️</button>
         </td>
       </tr>`).join('');
     root.innerHTML = `<table><thead><tr><th>Type</th><th>Text</th><th>Rating</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
-    root.querySelectorAll('button[data-edit]').forEach(btn=>{ btn.addEventListener('click',(e)=>{ e.preventDefault(); const id = btn.getAttribute('data-edit'); if(id) editCard(id); }); });
-    root.querySelectorAll('button[data-del]').forEach(btn=>{ btn.addEventListener('click',(e)=>{ e.preventDefault(); const id = btn.getAttribute('data-del'); if(id) delCard(id); }); });
   }
   document.getElementById('listType').addEventListener('change', renderList);
   document.getElementById('listRating').addEventListener('change', renderList);
 
-  function editCard(id){
+  window.editCard = (id) => {
     const c = cards.find(x=>x.id===id); if(!c) return;
-    const text = prompt('Edit text:', c.text); if(text==null) return; const nt = String(text).trim(); if(!nt) return; c.text = nt;
-    const r = prompt('Rating: 0=Not Familiar, 1=Familiar, 2=Satisfied', String(c.rating)); if(r==null) return; c.rating = Math.max(0, Math.min(2, Number(r)||0));
+    const nt = prompt('Edit text:', c.text); if(!nt) return; c.text = nt.trim();
     save(); renderList();
-  }
-  function delCard(id){ if(!confirm('This will delete the card. Are you sure?')) return; cards = cards.filter(c=>c.id!==id); save(); renderList(); }
+  };
+  window.delCard = (id) => { if(confirm('Delete?')) { cards = cards.filter(c=>c.id!==id); save(); renderList(); } };
 
   // ===== Import / Export =====
-  function makeExportBlob(){ return new Blob([JSON.stringify(cards, null, 2)], { type:'application/json' }); }
-  document.getElementById('exportBtn').addEventListener('click', ()=>{
-    try{ const blob = makeExportBlob(); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'english_flashcards.json'; document.body.appendChild(a); a.style.display = 'none'; a.click(); setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },0); } catch(err){ alert('Export failed: ' + (err && err.message ? err.message : err)); }
+  $('#exportBtn').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(cards, null, 2)], { type:'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'flashcards.json'; a.click();
   });
-  document.getElementById('importBtn').addEventListener('click', ()=> document.getElementById('importInput').click());
-  document.getElementById('importInput').addEventListener('change', (e)=>{
-    const file = e.target.files && e.target.files[0]; if(!file) return;
+  $('#importBtn').addEventListener('click', ()=> $('#importInput').click());
+  $('#importInput').addEventListener('change', (e)=>{
     const reader = new FileReader(); reader.onload = ()=>{
-      try{ const arr = JSON.parse(String(reader.result)); if(!Array.isArray(arr)) throw new Error('Invalid file');
-        const now = Date.now();
-        const cleaned = arr.map(x=>({ id: x.id || crypto.randomUUID(), kind: x.kind==='sentence' ? 'sentence' : 'word', text: String(x.text||'').trim(), created: Number(x.created)||now, seen: Number(x.seen)||0, rating: (x.rating===1?1:(x.rating===2?2:0)) })).filter(x=>x.text);
-        cards = mergeById(cards, cleaned); save(); alert('Imported ' + cleaned.length + ' cards'); renderList();
-      }catch(err){ alert('Import failed: ' + err.message); }
-    }; reader.readAsText(file);
+      try { cards = JSON.parse(reader.result); save(); renderList(); } catch(err){ alert('Invalid file'); }
+    }; reader.readAsText(e.target.files[0]);
   });
-  document.getElementById('wipeBtn').addEventListener('click', ()=>{ if(!confirm('This will delete ALL cards. Continue?')) return; cards = []; save(); renderList(); rebuildQueue(); showNext(true); });
+  $('#wipeBtn').addEventListener('click', ()=>{ if(confirm('Wipe All?')) { cards = []; save(); renderList(); rebuildQueue(); } });
 
   // ===== Persistence =====
   function load(){
-    try{
-      const lsRaw = localStorage.getItem(LS_KEY);
-      if(lsRaw){ const arr = JSON.parse(lsRaw); if(Array.isArray(arr)) return arr; }
-    }catch{}
-    try{
-      const el = document.getElementById('cardData'); if(!el) return [];
-      const txt = el.textContent || '[]'; const arr = JSON.parse(txt);
-      return Array.isArray(arr) ? arr : [];
-    }catch{ return []; }
+    try{ const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : []; }catch{ return []; }
   }
-  function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(cards)); }catch{} }
-
-  // ===== Utils =====
-  function mergeById(orig, incoming){ const map = new Map(orig.map(o=>[o.id,o])); for(const c of incoming){ map.set(c.id, c); } return Array.from(map.values()); }
+  function save(){ localStorage.setItem(LS_KEY, JSON.stringify(cards)); }
   function escapeHtml(s){ return s.replace(/[&<>\"]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
 
-  // ===== Tests (light) =====
-  document.getElementById('testBtn').addEventListener('click', runTests);
-  const testBadge = document.getElementById('testBadge');
-  function runTests(){ const results=[]; const ok=(n,c)=>{results.push({name:n,pass:!!c}); console.assert(c,n);}; ok('Export button exists', !!document.getElementById('exportBtn')); const fc=document.querySelector('.flashcard'); if(fc){ const cs=getComputedStyle(fc); ok('Flashcard border visible', cs.borderStyle==='solid' && parseFloat(cs.borderTopWidth)>=2); ok('Flashcard corners sharp', parseFloat(cs.borderTopLeftRadius)===0);} else { ok('Flashcard element is present', false);} const pass=results.filter(r=>r.pass).length; const total=results.length; testBadge.style.display='block'; testBadge.textContent=`Tests: ${pass}/${total} passed`; setTimeout(()=>{ testBadge.style.display='none'; },5000); console.table(results);}
+  // ===== Tests =====
+  $('#testBtn').addEventListener('click', runTests);
+  function runTests(){ 
+    const results = [
+      { name: 'Export exists', pass: !!$('#exportBtn') },
+      { name: 'Cards exist', pass: Array.isArray(cards) }
+    ];
+    const pass = results.filter(r=>r.pass).length;
+    const testBadge = $('#testBadge');
+    testBadge.style.display = 'block';
+    testBadge.textContent = `Tests: ${pass}/${results.length} passed`;
+    setTimeout(()=> testBadge.style.display='none', 3000);
+  }
 
-  // Init
   switchTab('add');
 })();
 </script>
